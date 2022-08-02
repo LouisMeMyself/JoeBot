@@ -173,27 +173,27 @@ class MoneyMaker:
         # return from_block, to_block, error_on_pairs
         return tx_hashs, error_on_pairs
 
-    def getDailyData(self):
+    def getWeeklyData(self):
         """
         get daily data of moneyMaker
         """
         now = time()
-        # Today at 12pm
-        if now % 86400 >= 43200:
-            timestamp = now - now % 43200
-        # Yesterday at 12pm
-        else:
-            timestamp = now - now % 86400 - 43200
-        to_block = w3.eth.get_block_number()
-        from_block = binary_search(9_000_000, to_block, timestamp)
+        # A week ago at 12pm
+        last_week_timestamp = now - now % 86400 - 43200 * 15
+
+        now_block = w3.eth.get_block_number()
+        last_week_block = binary_search(9_000_000, now_block, last_week_timestamp)
+        yesterday_block = binary_search(
+            last_week_block, now_block, now - now % 86400 - 43200
+        )
 
         token = self.getERC20(self.moneyMaker.functions.tokenTo().call())
         precision = 10 ** int(token.functions.decimals().call())
         tokenSymbol = token.functions.symbol().call()
         pairs, amountsSent = [], []
-        for i in range((to_block - from_block) // 2048 + 1):
-            _to_block = min(from_block + (i + 1) * 2048 - 1, to_block)
-            events = self.getLogConvertEvents(from_block + i * 2048, _to_block)
+        for i in range((now_block - yesterday_block) // 2048 + 1):
+            _to_block = min(yesterday_block + (i + 1) * 2048 - 1, now_block)
+            events = self.getLogConvertEvents(yesterday_block + i * 2048, _to_block)
 
             for event in events:
                 args = event["args"]
@@ -203,7 +203,17 @@ class MoneyMaker:
                     )
                 )
                 amountsSent.append(int(args["amountTOKEN"]) / precision)
-        return pairs, amountsSent, tokenSymbol
+
+        last7days = sum(amountsSent)
+
+        for i in range((yesterday_block - last_week_block) // 2048 + 1):
+            _to_block = min(last_week_block + (i + 1) * 2048 - 1, yesterday_block)
+            events = self.getLogConvertEvents(last_week_block + i * 2048, _to_block)
+
+            for event in events:
+                args = event["args"]
+                last7days += int(args["amountTOKEN"]) / precision
+        return pairs, amountsSent, last7days, tokenSymbol
 
     def getERC20(self, address):
         """
@@ -215,32 +225,23 @@ class MoneyMaker:
         """
         Return today's info, in a list to be sent in different messages if they are too long
         """
-        pairs, amounts, symbol = self.getDailyData()
+        pairs, amounts, last7days, symbol = self.getWeeklyData()
 
-        token_sent_last_7_days = JoeSubGraph.getBuyBackLast7d(details=True)
-        today_info = sum(amounts)
+        today_total = sum(amounts)
 
         message = [
             "{} : {} ${}".format(pair, readable(amount, 2), symbol)
             for pair, amount in zip(pairs, amounts)
         ]
 
-        message.append("Total: {} ${}".format(readable(today_info, 2), symbol))
+        message.append("Total: {} ${}".format(readable(today_total, 2), symbol))
 
         message.append(
             "Last 7 days: {} ${} ".format(
-                readable(sum(token_sent_last_7_days) + today_info, 2),
+                readable(last7days, 2),
                 symbol,
             )
         )
-
-        if token_sent_last_7_days:
-            if token_sent_last_7_days[-1] == 0:
-                JoeSubGraph.addBuyBackLast7d(today_info, replace_last=True)
-            elif token_sent_last_7_days[-1] != today_info:
-                JoeSubGraph.addBuyBackLast7d(today_info)
-        else:
-            JoeSubGraph.addBuyBackLast7d(today_info)
 
         return message
 

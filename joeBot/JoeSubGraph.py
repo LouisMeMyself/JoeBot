@@ -313,50 +313,6 @@ def reloadAssets():
     Constants.symbol_to_address = s2a
 
 
-def getBuyBackLast7d(details=False):
-    try:
-        with open("./content/last7daysbuyback.json", "r") as f:
-            last7d = json.load(f)
-
-        now = datetime.datetime.now().timestamp() * 1_000_000
-
-        buybacks = [
-            float(val)
-            for ts, val in last7d["last7days"].items()
-            if int(ts) > now - 86_400_000_000 * 7.5
-        ]
-        if details:
-            return buybacks
-        return sum(buybacks)
-    except FileNotFoundError:
-        if details:
-            return [0]
-        return 0
-
-
-def addBuyBackLast7d(today_buyback, replace_last=False):
-    try:
-        with open("./content/last7daysbuyback.json", "r") as f:
-            last7d = json.load(f)
-
-        now = int(datetime.datetime.now().timestamp() * 1_000_000)
-
-        buyback = {
-            ts: float(val)
-            for ts, val in last7d["last7days"].items()
-            if int(ts) > now - 86_400_000_000 * 7.5
-        }
-        buyback[now] = today_buyback
-
-        with open("./content/last7daysbuyback.json", "w") as f:
-            json.dump({"last7days": buyback}, f)
-    except FileNotFoundError:
-        with open("./content/last7daysbuyback.json", "w") as f:
-            json.dump({"last7days": {"0":0}}, f)
-    except Exception as e:
-        raise e
-
-
 def getAbout():
     joePrice = getJoePrice()
     avaxPrice = getAvaxPrice()
@@ -429,7 +385,6 @@ def getLendingAbout():
 if __name__ == "__main__":
     # print(readable(getTraderJoeTVL()))
     # print(getLendingAbout())
-    # print(getBuyBackLast7d())
     # print(getCurrentGasPrice() / 10**9)
     print(getMoneyMakerPositions(5_000, return_reserve_and_balance=True))
     # reloadAssets()

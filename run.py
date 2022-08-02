@@ -18,12 +18,15 @@ def main(bot_name):
     # use local imports to avoid creating bots when importing modules
     if bot_name == "discord-avax":
         import AvaxBot
+
         AvaxBot.start()
     elif bot_name == "discord-joe":
         import JoeDiscordBot
+
         JoeDiscordBot.start()
     elif bot_name == "telegram-joe":
         import JoeTelegramBot
+
         JoeTelegramBot.start()
     else:
         raise ValueError(f"Unknown bot name {bot_name}")
