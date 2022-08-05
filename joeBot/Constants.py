@@ -157,8 +157,9 @@ class Channels:
         self.GUIDELINES_MSG_ID = (843668142764589076, 852636768788021288)[server_nb]
         self.BOT_FEED = (898964756508065852, 853397123713204244)[server_nb]
         self.BOT_ERRORS = (909093515634561106, 853397123713204244)[server_nb]
-        self.FAKE_COLLECTIONS_CHANNEL_ID = (996684742193840168, 111)[server_nb]
-        # TODO add FAKE_COLLECTIONS_CHANNEL_ID in test server
+        self.FAKE_COLLECTIONS_CHANNEL_ID = (996684742193840168, 853397123713204244)[
+            server_nb
+        ]
 
     def get_channel(self, channel_id):
         return self.__channel[channel_id]
