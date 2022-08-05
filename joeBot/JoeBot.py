@@ -279,14 +279,14 @@ class JoeBot:
                 f"Found {len(found_addresses)} addresses in your message."
             )
         else:
-            existing_collection, verified = self.existing_verified(found_addresses[0])
-            if not existing_collection:
+            verification_status = self.verification_status(found_addresses[0])
+            if not verification_status:
                 await ctx.reply(f"Collection {found_addresses[0]} doesn't exist")
                 return
-            elif verified:
+            elif verification_status in Constants.VERIFIED:
                 await ctx.reply("You cannot blocklist verified collection")
                 return
-            elif not verified:
+            else:
                 await self.blocklist_collection(ctx, found_addresses[0], message)
 
     def find_address(self, msg):
@@ -294,16 +294,16 @@ class JoeBot:
         address = re.findall(address_regex, msg)
         if address:
             return address
-        return False
 
-    def existing_verified(self, address):
+    def verification_status(self, address):
         url = f"{Constants.ENV_URL}v2/collections/{address}"
-        request = requests.get(url, headers={"x-joebarn-api-key": self.BARN_KEY}).json()
-        try:
-            return True, request["verified"] in Constants.VERIFIED
-        except KeyError:
-            if request["detail"] == "Not Found":
-                return False, False
+        request = requests.get(url, headers={"x-joebarn-api-key": self.BARN_KEY})
+        if request.status_code == 200:
+            return request.json()["verified"]
+        elif request.status_code == 404:
+            return {}
+        else:
+            raise Exception("Status code of verification_status not in [200, 404]")
 
     async def blocklist_collection(self, ctx, address, report):
         blocklist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
@@ -357,14 +357,14 @@ class JoeBot:
                 f"Found {len(found_addresses)} addresses in your message."
             )
         else:
-            existing_collection, verified = self.existing_verified(found_addresses[0])
-            if not existing_collection:
+            verification_status = self.verification_status(found_addresses[0])
+            if not verification_status:
                 await ctx.reply(f"Collection {found_addresses[0]} doesn't exist")
                 return
-            elif verified:
-                await ctx.reply("You cannot allowlist verified collection")
+            elif verification_status in Constants.VERIFIED:
+                await ctx.reply("You cannot allowilist verified collection")
                 return
-            elif not verified:
+            else:
                 await self.allowlist_collection(ctx, found_addresses[0], message)
 
     async def allowlist_collection(self, ctx, address, report):
