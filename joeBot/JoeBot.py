@@ -1,11 +1,15 @@
 import asyncio
 import logging
+import os
 import random
 from datetime import datetime, timedelta
+import re
 from time import sleep
 
 import discord
 from discord.ext import commands, tasks
+from dotenv import load_dotenv
+import requests
 from web3 import Web3
 
 from joeBot import JoePic, JoeSubGraph, Constants, Utils
@@ -14,7 +18,7 @@ from joeBot.Utils import readable, Ticker
 
 
 logger = logging.getLogger(__name__)
-
+load_dotenv()
 # web3
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
@@ -117,6 +121,7 @@ class JoeBot:
                 MoneyMakerTicker(self.channels, self.callConvert),
             )
         )
+        self.BARN_KEY = os.getenv("BARN_KEY")
 
     async def onReady(self):
         """starts joeBot"""
@@ -251,3 +256,143 @@ class JoeBot:
             message.append(string)
         if message:
             await channel.send("\n".join(message))
+
+    async def blocklist(self, ctx):
+        if ctx.message.channel.id != self.channels.FAKE_COLLECTIONS_CHANNEL_ID:
+            """command usable only in FAKE_COLLECTIONS_CHANNEL_ID"""
+            return
+
+        if ctx.message.reference:
+            """mod is replying to reporting user - fetch user's message"""
+            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        else:
+            """mod is providing collection address himself - fetch his message"""
+            message = ctx.message
+
+        found_addresses = self.find_address(message.content)
+
+        if not found_addresses:
+            await ctx.reply("Collection address not found in your message.")
+        elif len(found_addresses) != 1:
+            await ctx.reply(
+                f"Please provide only one collection address at the time. "
+                f"Found {len(found_addresses)} addresses in your message."
+            )
+        else:
+            existing_collection, verified = self.existing_verified(found_addresses[0])
+            if not existing_collection:
+                await ctx.reply(f"Collection {found_addresses[0]} doesn't exist")
+                return
+            elif verified:
+                await ctx.reply("You cannot blocklist verified collection")
+                return
+            elif not verified:
+                await self.blocklist_collection(ctx, found_addresses[0], message)
+
+    def find_address(self, msg):
+        address_regex = re.compile(r"0x[a-fA-F0-9]{40}")
+        address = re.findall(address_regex, msg)
+        if address:
+            return address
+        return False
+
+    def existing_verified(self, address):
+        url = f"{Constants.ENV_URL}v2/collections/{address}"
+        request = requests.get(url, headers={"x-joebarn-api-key": self.BARN_KEY}).json()
+        try:
+            return True, request["verified"] in Constants.VERIFIED
+        except KeyError:
+            if request["detail"] == "Not Found":
+                return False, False
+
+    async def blocklist_collection(self, ctx, address, report):
+        blocklist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
+        payload = {"blocklistAddrs": [address]}
+        request = requests.post(
+            blocklist_url, headers={"x-joebarn-api-key": self.BARN_KEY}, json=payload
+        ).json()
+
+        if request == []:
+            await ctx.reply(
+                f"Tried blocklisting {address}, but it's probably blocklisted already. "
+                f"Thanks for reporting {report.author.mention} anyway!"
+            )
+        elif request[0]["verificationStatus"] == "blocklisted":
+            logger.info(
+                "Collection {} blocklisted by {}, reported by {}".format(
+                    address,
+                    ctx.message.author.name,
+                    report.author.name,
+                )
+            )
+            await ctx.reply(
+                f"Found collection address {address} and blocklisted it. "
+                f"Thanks for reporting {report.author.mention}"
+            )
+        else:
+            await ctx.reply(
+                f"Tried blocklisting {address} and it failed. "
+                f"Thanks for reporting {report.author.mention} anyway"
+            )
+
+    async def allowlist(self, ctx):
+        if ctx.message.channel.id != self.channels.FAKE_COLLECTIONS_CHANNEL_ID:
+            """command usable only in FAKE_COLLECTIONS_CHANNEL_ID"""
+            return
+
+        if ctx.message.reference:
+            """mod is replying to reporting user - fetch user's message"""
+            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        else:
+            """mod is providing collection address himself - fetch his message"""
+            message = ctx.message
+
+        found_addresses = self.find_address(message.content)
+
+        if not found_addresses:
+            await ctx.reply("Collection address not found in your message.")
+        elif len(found_addresses) != 1:
+            await ctx.reply(
+                f"Please provide only one collection address at the time. "
+                f"Found {len(found_addresses)} addresses in your message."
+            )
+        else:
+            existing_collection, verified = self.existing_verified(found_addresses[0])
+            if not existing_collection:
+                await ctx.reply(f"Collection {found_addresses[0]} doesn't exist")
+                return
+            elif verified:
+                await ctx.reply("You cannot allowlist verified collection")
+                return
+            elif not verified:
+                await self.allowlist_collection(ctx, found_addresses[0], message)
+
+    async def allowlist_collection(self, ctx, address, report):
+        blocklist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
+        payload = {"allowlistAddrs": [address]}
+        request = requests.post(
+            blocklist_url, headers={"x-joebarn-api-key": self.BARN_KEY}, json=payload
+        ).json()
+
+        if request == []:
+            await ctx.reply(
+                f"Tried allowlisting {address}, but it's probably allowlisted already. "
+                f"Thanks for reporting {report.author.mention} anyway!"
+            )
+        elif request[0]["verificationStatus"] == "unverified":
+            logger.info(
+                "Collection {} allowlisted by {}, reported by {}".format(
+                    address,
+                    ctx.message.author.name,
+                    report.author.name,
+                )
+            )
+            await ctx.reply(
+                f"Found collection address {address} and allowlisted it. "
+                f"Thanks for reporting {report.author.mention}"
+            )
+        else:
+            await ctx.reply(
+                f"Tried allowlisting {address} and it failed. "
+                f"Thanks for reporting {report.author.mention} anyway"
+            )
