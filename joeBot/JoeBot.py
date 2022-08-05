@@ -291,7 +291,7 @@ class JoeBot:
                 await self.blocklist_collection(ctx, found_addresses[0], message)
 
     def find_address(self, msg):
-        address_regex = re.compile(r"0x[a-fA-F0-9]{40}")
+        address_regex = re.compile(r"0x[a-fA-F0-9]{40}(?![a-fA-F0-9])")
         address = re.findall(address_regex, msg)
         if address:
             return address
