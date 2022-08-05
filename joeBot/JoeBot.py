@@ -9,8 +9,8 @@ from time import sleep
 import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-import requests
 from web3 import Web3
+import aiohttp
 
 from joeBot import JoePic, JoeSubGraph, Constants, Utils
 from joeBot.MoneyMakerBot import MoneyMaker
@@ -121,7 +121,8 @@ class JoeBot:
                 MoneyMakerTicker(self.channels, self.callConvert),
             )
         )
-        self.BARN_KEY = os.getenv("BARN_KEY")
+        BARN_KEY = os.getenv("BARN_KEY")
+        self.auth_header = {"x-joebarn-api-key": BARN_KEY}
 
     async def onReady(self):
         """starts joeBot"""
@@ -279,7 +280,7 @@ class JoeBot:
                 f"Found {len(found_addresses)} addresses in your message."
             )
         else:
-            verification_status = self.verification_status(found_addresses[0])
+            verification_status = await self.verification_status(found_addresses[0])
             if not verification_status:
                 await ctx.reply(f"Collection {found_addresses[0]} doesn't exist")
                 return
@@ -295,29 +296,34 @@ class JoeBot:
         if address:
             return address
 
-    def verification_status(self, address):
+    async def verification_status(self, address):
         url = f"{Constants.ENV_URL}v2/collections/{address}"
-        request = requests.get(url, headers={"x-joebarn-api-key": self.BARN_KEY})
-        if request.status_code == 200:
-            return request.json()["verified"]
-        elif request.status_code == 404:
-            return {}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.auth_header) as response:
+                verified_status = await response.json()
+
+        if response.status == 200:
+            return verified_status["verified"]
+        elif response.status == 404:
+            return ""
         else:
             raise Exception("Status code of verification_status not in [200, 404]")
 
     async def blocklist_collection(self, ctx, address, report):
         blocklist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
         payload = {"blocklistAddrs": [address]}
-        request = requests.post(
-            blocklist_url, headers={"x-joebarn-api-key": self.BARN_KEY}, json=payload
-        ).json()
-
-        if request == []:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                blocklist_url, headers=self.auth_header, json=payload
+            ) as response:
+                json_response = await response.json()
+        if json_response == []:
             await ctx.reply(
                 f"Tried blocklisting {address}, but it's probably blocklisted already. "
                 f"Thanks for reporting {report.author.mention} anyway!"
             )
-        elif request[0]["verificationStatus"] == "blocklisted":
+        elif json_response[0]["verificationStatus"] == "blocklisted":
             logger.info(
                 "Collection {} blocklisted by {}, reported by {}".format(
                     address,
@@ -357,7 +363,7 @@ class JoeBot:
                 f"Found {len(found_addresses)} addresses in your message."
             )
         else:
-            verification_status = self.verification_status(found_addresses[0])
+            verification_status = await self.verification_status(found_addresses[0])
             if not verification_status:
                 await ctx.reply(f"Collection {found_addresses[0]} doesn't exist")
                 return
@@ -368,18 +374,19 @@ class JoeBot:
                 await self.allowlist_collection(ctx, found_addresses[0], message)
 
     async def allowlist_collection(self, ctx, address, report):
-        blocklist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
+        allowlist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
         payload = {"allowlistAddrs": [address]}
-        request = requests.post(
-            blocklist_url, headers={"x-joebarn-api-key": self.BARN_KEY}, json=payload
-        ).json()
-
-        if request == []:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                allowlist_url, headers=self.auth_header, json=payload
+            ) as response:
+                json_response = await response.json()
+        if json_response == []:
             await ctx.reply(
                 f"Tried allowlisting {address}, but it's probably allowlisted already. "
                 f"Thanks for reporting {report.author.mention} anyway!"
             )
-        elif request[0]["verificationStatus"] == "unverified":
+        elif json_response[0]["verificationStatus"] == "unverified":
             logger.info(
                 "Collection {} allowlisted by {}, reported by {}".format(
                     address,
