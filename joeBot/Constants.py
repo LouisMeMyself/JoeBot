@@ -4,10 +4,6 @@ import json
 TEST_SERVER_ID = 852632556137611334
 LIVE_SERVER_ID = 830990443457806347
 
-# BLOCKLIST ENVIRONMENT
-ENV_URL = "https://barn.joepegs.app/"
-VERIFIED = ["verified", "verified_trusted"]
-
 # Emojis
 EMOJI_CHECK = "✅"
 EMOJI_CROSS = "❌"
@@ -23,12 +19,10 @@ PROFILE_PICTURE_COMMAND = "!joepic"
 SET_MIN_USD_COMMAND = "!setmin"
 SET_SLIPPAGE = "!setslippage"
 CONVERT_COMMAND = "!convert"
-BLOCK_COMMAND = "!blocklist"
 
 # Roles
 ROLE_FOR_CMD = "Bot Master"
 VERIFIED_USER_ROLE = "Joe"
-ROLE_FOR_BLOCKLISTING = "Community Management"
 
 # SubGraph links
 JOE_EXCHANGE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
@@ -157,8 +151,6 @@ class Channels:
         self.GUIDELINES_MSG_ID = (843668142764589076, 852636768788021288)[server_nb]
         self.BOT_FEED = (898964756508065852, 853397123713204244)[server_nb]
         self.BOT_ERRORS = (909093515634561106, 853397123713204244)[server_nb]
-        self.FAKE_COLLECTIONS_CHANNEL_ID = (996684742193840168, 111)[server_nb]
-        # TODO add FAKE_COLLECTIONS_CHANNEL_ID in test server
 
     def get_channel(self, channel_id):
         return self.__channel[channel_id]

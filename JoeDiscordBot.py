@@ -40,23 +40,6 @@ async def about(ctx):
     await joeBot.about(ctx)
 
 
-@discord_bot.command()
-@commands.has_role(Constants.ROLE_FOR_BLOCKLISTING)
-async def blocklist(ctx):
-    """blocklist collection from Joepegs based on address found in message"""
-    await joeBot.blocklist(ctx)
-
-
-@discord_bot.command()
-@commands.has_role(Constants.ROLE_FOR_BLOCKLISTING)
-async def allowlist(ctx):
-    """
-    allowlist collection from Joepegs based on address found in message
-    reverts blocklisting to status unverified
-    """
-    await joeBot.allowlist(ctx)
-
-
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def setmin(ctx):
