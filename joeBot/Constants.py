@@ -5,7 +5,7 @@ TEST_SERVER_ID = 852632556137611334
 LIVE_SERVER_ID = 830990443457806347
 
 # BLOCKLIST ENVIRONMENT
-ENV_URL = "https://barn.joepegs.app/"
+ENV_URL = "https://barn.joepegs.com/"
 VERIFIED = ["verified", "verified_trusted"]
 
 # Emojis
