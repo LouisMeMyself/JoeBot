@@ -43,7 +43,7 @@ async def about(ctx):
 @discord_bot.command()
 @commands.has_role(Constants.ROLE_FOR_BLOCKLISTING)
 async def blocklist(ctx):
-    """blocklist collection from Joepegs based on address found in message a"""
+    """blocklist collection from Joepegs based on address found in message"""
     await joeBot.blocklist(ctx)
 
 

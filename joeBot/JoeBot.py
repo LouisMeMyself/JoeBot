@@ -368,7 +368,7 @@ class JoeBot:
                 await ctx.reply(f"Collection {found_addresses[0]} doesn't exist")
                 return
             elif verification_status in Constants.VERIFIED:
-                await ctx.reply("You cannot allowilist verified collection")
+                await ctx.reply("You cannot allowlist verified collection")
                 return
             else:
                 await self.allowlist_collection(ctx, found_addresses[0], message)
