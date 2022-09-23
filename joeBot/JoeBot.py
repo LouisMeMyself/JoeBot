@@ -105,7 +105,7 @@ class JoeTicker(commands.Cog, Ticker):
 
 class JoeBot:
     moneyMaker = MoneyMaker
-    joePic = JoePic.JoePic()
+    joePic_ = JoePic.JoePic()
     discordBot = commands.Bot
     channels = Constants.Channels
     taskManager = Utils.TaskManager
@@ -213,7 +213,7 @@ class JoeBot:
         picture"""
         if ctx.message.channel.id == self.channels.JOEPIC_CHANNEL_ID:
             try:
-                answer = self.joePic.do_profile_picture(
+                answer = self.joePic_.do_profile_picture(
                     ctx.message.content.replace(Constants.PROFILE_PICTURE_COMMAND, "")[
                         1:
                     ]
