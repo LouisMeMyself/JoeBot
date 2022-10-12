@@ -425,7 +425,6 @@ class JoeBot:
         # this command should be globally time-restricted, so nonce [get_transaction_count function] is safe to use
         if ctx.message.channel.id != self.channels.FAUCET_CHANNEL_ID:
             """command usable only in FAUCET_CHANNEL_ID"""
-            await ctx.reply(f"Please use <#{self.channels.FAUCET_CHANNEL_ID}> channel")
             return
 
         found_addresses = self.find_address(ctx.message.content)
