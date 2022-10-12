@@ -438,21 +438,6 @@ class JoeBot:
                 f"Found {len(found_addresses)} addresses in your message."
             )
         else:
-            try:
-                with open("content/db/db.json", "r") as f:
-                    db = json.load(f)
-            except FileNotFoundError:
-                with open("../content/db/db.json", "r") as f:
-                    db = json.load(f)
-
-            if ctx.message.author.name in db.items():
-                time_remaining = db[ctx.message.author.name] - time()
-                if time_remaining > 0:
-                    await ctx.reply(
-                        f"You can only request tokens once per 24h per user. "
-                        f"Please wait {int(time_remaining/60)} minutes "
-                    )
-                    return
             address = w3_testnet.toChecksumAddress(found_addresses[0])
             receipt = await self.executeFaucetTx(ctx, address)
             if receipt == None:
@@ -496,19 +481,5 @@ class JoeBot:
                 signed.rawTransaction
             )
             receipt = w3_testnet.eth.wait_for_transaction_receipt(sent_transaction)
-            if receipt["status"]:
-                try:
-                    with open("content/db/db.json", "r") as f:
-                        db = json.load(f)
-                except FileNotFoundError:
-                    with open("../content/db/db.json", "r") as f:
-                        db = json.load(f)
-                db[ctx.message.author.id] = time() + Constants.FAUCET_COOLDOWN
-                try:
-                    with open("content/db/db.json", "w") as f:
-                        json.dump(db, f)
-                except FileNotFoundError:
-                    with open("../content/db/db.json", "w") as f:
-                        json.dump(db, f)
 
             return receipt
