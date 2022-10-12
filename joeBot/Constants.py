@@ -171,7 +171,7 @@ class Channels:
         self.FAKE_COLLECTIONS_CHANNEL_ID = (996684742193840168, 853397123713204244)[
             server_nb
         ]
-        self.FAUCET_CHANNEL_ID = (1029657134205521971, 853397123713204244)[server_nb]
+        self.FAUCET_CHANNEL_ID = (1029750380889915412, 853397123713204244)[server_nb]
 
     def get_channel(self, channel_id):
         return self.__channel[channel_id]
