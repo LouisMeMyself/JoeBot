@@ -21,7 +21,7 @@ from joeBot.Utils import readable, Ticker
 logger = logging.getLogger(__name__)
 load_dotenv()
 # web3
-w3_testnet = Web3(Web3.HTTPProvider(os.getenv("FIGMENT_FUJI_RPC")))
+w3_testnet = Web3(Web3.HTTPProvider(os.getenv("FUJI_RPC")))
 
 if not w3_testnet.isConnected():
     raise Exception("Error web3 can't connect")
