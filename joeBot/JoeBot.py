@@ -470,10 +470,11 @@ class JoeBot:
 
     async def executeFaucetTx(self, ctx, receiver_address):
         last_request = faucet_contract.functions.lastRequest(receiver_address).call()
-        time_remaining = last_request + Constants.FAUCET_COOLDOWN - time()
+        faucet_cooldown = faucet_contract.functions.requestCooldown().call()
+        time_remaining = last_request + faucet_cooldown - time()
         if time_remaining > 0:
             await ctx.reply(
-                f"You can only request tokens once per 24h per address. "
+                f"You can only request tokens once per {faucet_cooldown/(60*60)}h per address. "
                 f"Please wait {int(time_remaining/60)} minutes "
             )
             return
