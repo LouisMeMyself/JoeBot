@@ -458,7 +458,7 @@ class JoeBot:
         time_remaining = last_request + faucet_cooldown - time()
         if time_remaining > 0:
             await ctx.reply(
-                f"You can only request tokens once per {faucet_cooldown/(60*60)}h per address. "
+                f"You can only request tokens once per {int(faucet_cooldown/(60*60))}h per address. "
                 f"Please wait {int(time_remaining/60)} minutes "
             )
             return
