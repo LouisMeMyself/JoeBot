@@ -137,6 +137,16 @@ async def convert(ctx):
     await joeBot.callConvert()
 
 
+@discord_bot.command(pass_context=True)
+@discord.ext.commands.cooldown(1, 60, type=discord.ext.commands.BucketType.channel)
+async def faucet(ctx):
+    """
+    Funds account with testnet tokens for LB.
+    Needs global cooldown to avoid sending more than 1 transaction with the same nonce
+    """
+    await joeBot.requestFaucet(ctx)
+
+
 @discord_bot.event
 async def on_command_error(ctx, error):
     await joeBot.onCommandError(ctx, error)
