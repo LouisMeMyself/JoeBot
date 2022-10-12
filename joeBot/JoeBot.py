@@ -21,17 +21,11 @@ from joeBot.Utils import readable, Ticker
 logger = logging.getLogger(__name__)
 load_dotenv()
 # web3
-w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 w3_testnet = Web3(Web3.HTTPProvider("https://api.avax-test.network/ext/bc/C/rpc"))
-if not w3.isConnected():
-    raise Exception("Error web3 can't connect")
+
 if not w3_testnet.isConnected():
     raise Exception("Error web3 can't connect")
 
-
-joetoken_contract = w3.eth.contract(
-    address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI
-)
 faucet_contract = w3_testnet.eth.contract(
     address=Constants.FAUCET_ADDRESS, abi=Constants.FAUCET_ABI
 )
