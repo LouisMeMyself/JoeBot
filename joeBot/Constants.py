@@ -16,6 +16,7 @@ EMOJI_ACCEPT_GUIDELINES = "✅"
 # utils
 E18 = 10**18
 PREMIUM_PER_TRANSACTION = 0.1
+FAUCET_COOLDOWN = 86400
 
 # Commands
 COMMAND_BEARD = "beard"
@@ -58,6 +59,8 @@ JOEWAVAX_ADDRESS = "0x454E67025631C065d3cFAD6d71E6892f74487a15"
 WAVAXUSDCE_ADDRESS = "0xA389f9430876455C36478DeEa9769B7Ca4E3DDB1"
 WAVAXUSDTE_ADDRESS = "0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256"
 
+FAUCET_ADDRESS = "0x2F416a337c8DbD75E9c0a9c276ad948Aa155Cd25"
+
 # ABI for web3
 try:
     with open("content/abis/pairabi.json", "r") as f:
@@ -93,6 +96,14 @@ try:
 except FileNotFoundError:
     with open("../content/abis/moneymakerabi.json", "r") as f:
         MONEYMAKER_ABI = json.load(f)
+
+try:
+    with open("content/abis/faucetabi.json", "r") as f:
+        FAUCET_ABI = json.load(f)
+except FileNotFoundError:
+    with open("../content/abis/faucetabi.json", "r") as f:
+        FAUCET_ABI = json.load(f)
+
 
 # assets address
 symbol_to_address = {}
@@ -160,6 +171,7 @@ class Channels:
         self.FAKE_COLLECTIONS_CHANNEL_ID = (996684742193840168, 853397123713204244)[
             server_nb
         ]
+        self.FAUCET_CHANNEL_ID = (1111, 853397123713204244)[server_nb]
 
     def get_channel(self, channel_id):
         return self.__channel[channel_id]

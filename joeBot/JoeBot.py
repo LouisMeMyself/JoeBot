@@ -4,7 +4,8 @@ import os
 import random
 from datetime import datetime, timedelta
 import re
-from time import sleep
+from time import sleep, time
+import json
 
 import discord
 from discord.ext import commands, tasks
@@ -21,10 +22,18 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 # web3
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
+w3_testnet = Web3(Web3.HTTPProvider("https://api.avax-test.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     raise Exception("Error web3 can't connect")
+if not w3_testnet.isConnected():
+    raise Exception("Error web3 can't connect")
+
+
 joetoken_contract = w3.eth.contract(
     address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI
+)
+faucet_contract = w3_testnet.eth.contract(
+    address=Constants.FAUCET_ADDRESS, abi=Constants.FAUCET_ABI
 )
 
 MIN_USD_VALUE = 5_000
@@ -123,6 +132,10 @@ class JoeBot:
         )
         BARN_KEY = os.getenv("BARN_KEY")
         self.auth_header = {"x-joebarn-api-key": BARN_KEY}
+
+        self.faucet_account = w3_testnet.eth.account.privateKeyToAccount(
+            (os.getenv("PRIVATE_KEY_FAUCET"))
+        )
 
     async def onReady(self):
         """starts joeBot"""
@@ -242,6 +255,10 @@ class JoeBot:
                 )
                 await ctx.reply(embed=e)
             return
+        elif isinstance(error, commands.CommandOnCooldown):
+            await ctx.reply(
+                f"This command is on cooldown! Try in {int(error.retry_after)} seconds"
+            )
         raise error
 
     async def sendMessage(self, list_of_strings, channel_id=None):
@@ -403,3 +420,94 @@ class JoeBot:
                 f"Tried allowlisting {address} and it failed. "
                 f"Thanks for reporting {report.author.mention} anyway"
             )
+
+    async def requestFaucet(self, ctx):
+        # this command should be globally time-restricted, so nonce [get_transaction_count function] is safe to use
+        if ctx.message.channel.id != self.channels.FAUCET_CHANNEL_ID:
+            """command usable only in FAUCET_CHANNEL_ID"""
+            await ctx.reply(f"Please use <#{self.channels.FAUCET_CHANNEL_ID}> channel")
+            return
+
+        found_addresses = self.find_address(ctx.message.content)
+
+        if not found_addresses:
+            await ctx.reply("Provide your address in proper format (0x + 40 symbols).")
+        elif len(found_addresses) != 1:
+            await ctx.reply(
+                f"Please provide only one address at the time. "
+                f"Found {len(found_addresses)} addresses in your message."
+            )
+        else:
+            try:
+                with open("content/db/db.json", "r") as f:
+                    db = json.load(f)
+            except FileNotFoundError:
+                with open("../content/db/db.json", "r") as f:
+                    db = json.load(f)
+
+            if ctx.message.author.name in db.items():
+                time_remaining = db[ctx.message.author.name] - time()
+                if time_remaining > 0:
+                    await ctx.reply(
+                        f"You can only request tokens once per 24h per user. "
+                        f"Please wait {int(time_remaining/60)} minutes "
+                    )
+                    return
+            address = w3_testnet.toChecksumAddress(found_addresses[0])
+            receipt = await self.executeFaucetTx(ctx, address)
+            if receipt == None:
+                return
+            tx_hash = receipt["transactionHash"].hex()
+            if receipt["status"]:
+                await ctx.reply(
+                    f"Tx successful! https://testnet.snowtrace.io/tx/{tx_hash}"
+                )
+            else:
+                await ctx.reply(
+                    f"Tx failed! https://testnet.snowtrace.io/tx/{tx_hash}"
+                    f"Please try again later."
+                )
+
+    async def executeFaucetTx(self, ctx, receiver_address):
+        last_request = faucet_contract.functions.lastRequest(receiver_address).call()
+        time_remaining = last_request + Constants.FAUCET_COOLDOWN - time()
+        if time_remaining > 0:
+            await ctx.reply(
+                f"You can only request tokens once per 24h per address. "
+                f"Please wait {int(time_remaining/60)} minutes "
+            )
+            return
+        else:
+            func_ = faucet_contract.functions.request(receiver_address)
+
+            nonce = w3_testnet.eth.get_transaction_count(self.faucet_account.address)
+            gasPrice = JoeSubGraph.getCurrentGasPrice()
+            construct_txn = func_.buildTransaction(
+                {
+                    "from": self.faucet_account.address,
+                    "nonce": nonce,
+                    "maxFeePerGas": int(gasPrice * 1.5),
+                    "maxPriorityFeePerGas": 2 * 10**9 + 1,
+                }
+            )
+            signed = self.faucet_account.signTransaction(construct_txn)
+            sent_transaction = w3_testnet.eth.send_raw_transaction(
+                signed.rawTransaction
+            )
+            receipt = w3_testnet.eth.wait_for_transaction_receipt(sent_transaction)
+            if receipt["status"]:
+                try:
+                    with open("content/db/db.json", "r") as f:
+                        db = json.load(f)
+                except FileNotFoundError:
+                    with open("../content/db/db.json", "r") as f:
+                        db = json.load(f)
+                db[ctx.message.author.id] = time() + Constants.FAUCET_COOLDOWN
+                try:
+                    with open("content/db/db.json", "w") as f:
+                        json.dump(db, f)
+                except FileNotFoundError:
+                    with open("../content/db/db.json", "w") as f:
+                        json.dump(db, f)
+
+            return receipt
