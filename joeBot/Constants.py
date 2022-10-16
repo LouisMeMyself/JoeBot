@@ -29,7 +29,7 @@ BLOCK_COMMAND = "!blocklist"
 # Roles
 ROLE_FOR_CMD = "Bot Master"
 VERIFIED_USER_ROLE = "Joe"
-ROLE_FOR_BLOCKLISTING = "Community Management"
+ROLE_FOR_BLOCKLISTING = 843637563789017128
 
 # SubGraph links
 JOE_EXCHANGE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
