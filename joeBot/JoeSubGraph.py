@@ -37,31 +37,31 @@ def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
 
 
 def getPriceOf(tokenAddress):
-    r = requests.get("https://api.traderjoexyz.com/priceusd/{}".format(tokenAddress))
+    r = requests.get("https://api.traderjoexyz.dev/priceusd/{}".format(tokenAddress))
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getDerivedPriceOf(tokenAddress):
-    r = requests.get("https://api.traderjoexyz.com/priceavax/{}".format(tokenAddress))
+    r = requests.get("https://api.traderjoexyz.dev/priceavax/{}".format(tokenAddress))
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getCirculatingSupply():
-    r = requests.get("https://api.traderjoexyz.com/supply/circulating")
+    r = requests.get("https://api.traderjoexyz.dev/supply/circulating")
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getLendingTotalSupply():
-    r = requests.get("https://api.traderjoexyz.com/lending/supply")
+    r = requests.get("https://api.traderjoexyz.dev/lending/supply")
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getLendingTotalBorrow():
-    r = requests.get("https://api.traderjoexyz.com/lending/borrow")
+    r = requests.get("https://api.traderjoexyz.dev/lending/borrow")
     assert r.status_code == 200
     return json.loads(r.text)
 
