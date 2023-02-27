@@ -28,6 +28,7 @@ jxjoetoken_contract = w3.eth.contract(
     address=w3.toChecksumAddress(Constants.JXJOETOKEN_ADDRESS),
     abi=Constants.JCOLLATERAL_ABI,
 )
+joeApiUrl = os.getenv("JOEAPI_URL")
 
 
 def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
@@ -37,31 +38,31 @@ def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
 
 
 def getPriceOf(tokenAddress):
-    r = requests.get("https://api.traderjoexyz.dev/priceusd/{}".format(tokenAddress))
+    r = requests.get("{}/priceusd/{}".format(joeApiUrl, tokenAddress))
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getDerivedPriceOf(tokenAddress):
-    r = requests.get("https://api.traderjoexyz.dev/priceavax/{}".format(tokenAddress))
+    r = requests.get("{}/priceavax/{}".format(joeApiUrl, tokenAddress))
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getCirculatingSupply():
-    r = requests.get("https://api.traderjoexyz.dev/supply/circulating")
+    r = requests.get("{}/supply/circulating".format(joeApiUrl))
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getLendingTotalSupply():
-    r = requests.get("https://api.traderjoexyz.dev/lending/supply")
+    r = requests.get("{}/lending/supply".format(joeApiUrl))
     assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getLendingTotalBorrow():
-    r = requests.get("https://api.traderjoexyz.dev/lending/borrow")
+    r = requests.get("{}/lending/borrow".format(joeApiUrl))
     assert r.status_code == 200
     return json.loads(r.text)
 
