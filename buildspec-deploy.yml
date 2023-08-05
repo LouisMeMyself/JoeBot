@@ -1,13 +1,14 @@
 version: 0.2
 
 phases:
-  pre_build:
+  build:
+    on-failure: ABORT
     commands:
       - REPOSITORY_URI=194943407731.dkr.ecr.eu-west-1.amazonaws.com/joebot
       - IMAGE_TAG=${IMAGE_TAG:-$(echo $CODEBUILD_WEBHOOK_TRIGGER | awk -F/ {'print $2'})}
       - aws eks update-kubeconfig --name $ENVIRONMENT-trader-joe-eks
-  build:
-    commands:
       - kubectl set image -n $ENVIRONMENT deployment/joebot-discord-avax joebot-discord-avax=$REPOSITORY_URI:$IMAGE_TAG
       - kubectl set image -n $ENVIRONMENT deployment/joebot-discord-joe joebot-discord-joe=$REPOSITORY_URI:$IMAGE_TAG
       - kubectl set image -n $ENVIRONMENT deployment/joebot-telegram-joe joebot-telegram-joe=$REPOSITORY_URI:$IMAGE_TAG
+    finally:
+      - bin/discord.sh
