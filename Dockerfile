@@ -1,4 +1,4 @@
-FROM 194943407731.dkr.ecr.eu-west-1.amazonaws.com/python:3.8
+FROM 194943407731.dkr.ecr.eu-west-1.amazonaws.com/python:latest
 
 WORKDIR /app
 
