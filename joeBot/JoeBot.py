@@ -322,19 +322,15 @@ class JoeBot:
             raise Exception("Status code of verification_status not in [200, 404]")
 
     async def blocklist_collection(self, ctx, address, report):
-        blocklist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
-        payload = {"blocklistAddrs": [address]}
+        blocklist_url = f"{Constants.ENV_URL}v3/admin/collections/avalanche/{address}"
+        payload = {"verified": "blocklisted"}
         async with aiohttp.ClientSession() as session:
-            async with session.post(
+            async with session.patch(
                 blocklist_url, headers=self.auth_header, json=payload
             ) as response:
                 json_response = await response.json()
-        if json_response == []:
-            await ctx.reply(
-                f"Tried blocklisting {address}, but it's probably blocklisted already. "
-                f"Thanks for reporting {report.author.mention} anyway!"
-            )
-        elif json_response[0]["verificationStatus"] == "blocklisted":
+
+        if json_response["verified"] == "blocklisted":
             logger.info(
                 "Collection {} blocklisted by {}, reported by {}".format(
                     address,
@@ -385,19 +381,14 @@ class JoeBot:
                 await self.allowlist_collection(ctx, found_addresses[0], message)
 
     async def allowlist_collection(self, ctx, address, report):
-        allowlist_url = f"{Constants.ENV_URL}v2/admin/blocklist-collections"
-        payload = {"allowlistAddrs": [address]}
+        allowlist_url = f"{Constants.ENV_URL}v3/admin/collections/avalanche/{address}"
+        payload = {"verified": "unverified"}
         async with aiohttp.ClientSession() as session:
-            async with session.post(
+            async with session.patch(
                 allowlist_url, headers=self.auth_header, json=payload
             ) as response:
                 json_response = await response.json()
-        if json_response == []:
-            await ctx.reply(
-                f"Tried allowlisting {address}, but it's probably allowlisted already. "
-                f"Thanks for reporting {report.author.mention} anyway!"
-            )
-        elif json_response[0]["verificationStatus"] == "unverified":
+        if json_response["verified"] == "unverified":
             logger.info(
                 "Collection {} allowlisted by {}, reported by {}".format(
                     address,
