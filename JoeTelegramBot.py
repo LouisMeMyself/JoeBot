@@ -27,6 +27,9 @@ bot = Bot(token=os.getenv("TELEGRAM_JOEBOT_KEY"))
 
 dp = Dispatcher()
 
+SWAP_LINK = "[Swap](https://traderjoexyz.com/avalanche/trade?utm_source=telegram&utm_medium=command&utm_campaign=joebotprompt)"
+
+
 # safeguard to not spam
 class Timer:
     def __init__(self):
@@ -173,8 +176,10 @@ async def price(message: types.Message):
             avaxp = JoeSubGraph.getAvaxPrice()
             await bot.send_message(
                 message.chat.id,
-                "${} : ${}\n".format(msg.upper(), smartRounding(avaxp)),
+                "${} : ${}\n{}".format(msg.upper(), smartRounding(avaxp), SWAP_LINK),
                 message_thread_id=message.message_thread_id,
+                parse_mode=ParseMode.MARKDOWN,
+                disable_web_page_preview=True,
             )
             return
         prices = JoeSubGraph.getPricesOf(msg)
@@ -184,18 +189,23 @@ async def price(message: types.Message):
                 prices + "\nUse /pricelist to know which token can be "
                 "tracked with JoeBot",
                 message_thread_id=message.message_thread_id,
+                parse_mode=ParseMode.MARKDOWN,
+                disable_web_page_preview=True,
             )
             return
         derivedPrice, priceInDollar = prices
         await bot.send_message(
             message.chat.id,
-            "${}: ${}\n{} ${}/$AVAX".format(
+            "${}: ${}\n{} ${}/$AVAX\n{}".format(
                 msg.upper(),
                 smartRounding(priceInDollar),
                 smartRounding(1 / derivedPrice),
                 msg.upper(),
+                SWAP_LINK,
             ),
             message_thread_id=message.message_thread_id,
+            parse_mode=ParseMode.MARKDOWN,
+            disable_web_page_preview=True,
         )
         return
 
@@ -204,15 +214,21 @@ async def price(message: types.Message):
     if len(prices) != 2:
         await bot.send_message(
             message.chat.id,
-            "{}\n".format(prices),
+            "{}\n{}".format(prices, SWAP_LINK),
             message_thread_id=message.message_thread_id,
+            parse_mode=ParseMode.MARKDOWN,
+            disable_web_page_preview=True,
         )
         return
     dprice, price = prices
     await bot.send_message(
         message.chat.id,
-        "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(1 / dprice, 4)),
+        "$JOE: ${}\n{} $JOE/$AVAX\n{}".format(
+            round(price, 4), round(1 / dprice, 4), SWAP_LINK
+        ),
         message_thread_id=message.message_thread_id,
+        parse_mode=ParseMode.MARKDOWN,
+        disable_web_page_preview=True,
     )
 
 
