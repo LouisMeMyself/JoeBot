@@ -106,28 +106,28 @@ async def alltasks(ctx):
     await ctx.reply(joeBot.taskManager.getAllTasks())
 
 
-# Todo Make this better using most liquid pair
-@discord_bot.command(pass_context=True)
-@commands.has_role(Constants.ROLE_FOR_CMD)
-async def setbridges(ctx):
-    """SetBridges."""
-    tokens, bridges = [], []
-    for line in ctx.message.content[12:].split("\n"):
-        token, bridge = line.split(" - ")
-        tokens.append(token)
-        bridges.append(bridge)
-    await joeBot.sendMessage(joeBot.moneyMaker.setBridges(tokens, bridges))
+# # Todo Make this better using most liquid pair
+# @discord_bot.command(pass_context=True)
+# @commands.has_role(Constants.ROLE_FOR_CMD)
+# async def setbridges(ctx):
+#     """SetBridges."""
+#     tokens, bridges = [], []
+#     for line in ctx.message.content[12:].split("\n"):
+#         token, bridge = line.split(" - ")
+#         tokens.append(token)
+#         bridges.append(bridge)
+#     await joeBot.sendMessage(joeBot.moneyMaker.setBridges(tokens, bridges))
 
 
-@discord_bot.command(pass_context=True)
-@commands.has_role(Constants.ROLE_FOR_CMD)
-async def info(ctx):
-    """return daily informations."""
-    info = joeBot.moneyMaker.getDailyInfo()
-    if ctx.message.content.strip().endswith("msg"):
-        await joeBot.sendMessage(info, joeBot.channels.BOT_FEED)
-    else:
-        await joeBot.sendMessage(info)
+# @discord_bot.command(pass_context=True)
+# @commands.has_role(Constants.ROLE_FOR_CMD)
+# async def info(ctx):
+#     """return daily informations."""
+#     info = joeBot.moneyMaker.getDailyInfo()
+#     if ctx.message.content.strip().endswith("msg"):
+#         await joeBot.sendMessage(info, joeBot.channels.BOT_FEED)
+#     else:
+#         await joeBot.sendMessage(info)
 
 
 @discord_bot.command(pass_context=True)

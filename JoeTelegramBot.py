@@ -10,7 +10,7 @@ from aiogram.filters import Command
 from dotenv import load_dotenv
 from web3 import Web3
 
-from joeBot import JoeSubGraph, Constants, JoeChart
+from joeBot import JoeBarn, Constants
 from joeBot.Utils import smartRounding
 from dotenv import load_dotenv
 
@@ -136,20 +136,13 @@ async def joeTicker(chat_id, mess_id):
                 chat_id in Constants.JOE_TICKER
                 and Constants.JOE_TICKER[chat_id] == mess_id
             ):
-                price = JoeSubGraph.getJoePrice()
+                (price, _) = JoeBarn.get_joe_price()
                 new_mess = "JOE price is ${} (updated at {} UTC)".format(
                     round(price, 4), datetime.datetime.utcnow().strftime("%H:%M:%S")
                 )
                 if new_mess != mess:
                     mess = new_mess
                     await bot.edit_message_text(mess, chat_id, mess_id)
-
-                if (
-                    last_reload is None
-                    or (datetime.datetime.utcnow() - last_reload).total_seconds() < 3600
-                ):
-                    JoeSubGraph.reloadAssets()
-                    last_reload = datetime.datetime.utcnow()
 
                 await asyncio.sleep(time_between_updates)
         except ConnectionError:
@@ -167,13 +160,13 @@ async def joeTicker(chat_id, mess_id):
 
 @dp.message(Command("price"))
 async def price(message: types.Message):
-    """return the current price of $Joe"""
+    """return the current price of $Joe or $Avax"""
     if not timer.canMessageOnChatId(message.chat.id):
         return
     msg = message.text.lower().replace("/price", "").replace(" ", "")
     if msg != "" and msg != "joe":
         if msg == "avax":
-            avaxp = JoeSubGraph.getAvaxPrice()
+            (avaxp, _) = JoeBarn.get_avax_price()
             await bot.send_message(
                 message.chat.id,
                 "${} : ${}\n{}".format(msg.upper(), smartRounding(avaxp), SWAP_LINK),
@@ -182,81 +175,17 @@ async def price(message: types.Message):
                 disable_web_page_preview=True,
             )
             return
-        prices = JoeSubGraph.getPricesOf(msg)
-        if len(prices) != 2:
-            await bot.send_message(
-                message.chat.id,
-                prices + "\nUse /pricelist to know which token can be "
-                "tracked with JoeBot",
-                message_thread_id=message.message_thread_id,
-                parse_mode=ParseMode.MARKDOWN,
-                disable_web_page_preview=True,
-            )
-            return
-        derivedPrice, priceInDollar = prices
-        await bot.send_message(
-            message.chat.id,
-            "${}: ${}\n{} ${}/$AVAX\n{}".format(
-                msg.upper(),
-                smartRounding(priceInDollar),
-                smartRounding(1 / derivedPrice),
-                msg.upper(),
-                SWAP_LINK,
-            ),
-            message_thread_id=message.message_thread_id,
-            parse_mode=ParseMode.MARKDOWN,
-            disable_web_page_preview=True,
-        )
-        return
 
-    prices = JoeSubGraph.getPricesOf(Constants.JOETOKEN_ADDRESS)
+    (priceUsd, priceNative) = JoeBarn.get_joe_price()
 
-    if len(prices) != 2:
-        await bot.send_message(
-            message.chat.id,
-            "{}\n{}".format(prices, SWAP_LINK),
-            message_thread_id=message.message_thread_id,
-            parse_mode=ParseMode.MARKDOWN,
-            disable_web_page_preview=True,
-        )
-        return
-    dprice, price = prices
     await bot.send_message(
         message.chat.id,
         "$JOE: ${}\n{} $JOE/$AVAX\n{}".format(
-            round(price, 4), round(1 / dprice, 4), SWAP_LINK
+            smartRounding(priceUsd, 4), smartRounding(1 / priceNative, 4), SWAP_LINK
         ),
         message_thread_id=message.message_thread_id,
         parse_mode=ParseMode.MARKDOWN,
         disable_web_page_preview=True,
-    )
-
-
-@dp.message(Command("pricelist"))
-async def pricelist(message: types.Message):
-    """Returns the list of tokens for which you can request their price from joebot with !price."""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    addresses = list(Constants.symbol_to_address.keys())
-    addresses.sort()
-    tokens = [i.upper() for i in addresses]
-    await bot.send_message(
-        message.chat.id,
-        "Tokens that can get their price from TJ are :\nAVAX, " + ", ".join(tokens),
-        message_thread_id=message.message_thread_id,
-    )
-
-
-@dp.message(Command("reloadassets"))
-async def reloadAssets(message: types.Message):
-    """reload assets"""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    JoeSubGraph.reloadAssets()
-    await bot.send_message(
-        message.chat.id,
-        "Assets have been reloaded",
-        message_thread_id=message.message_thread_id,
     )
 
 

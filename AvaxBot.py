@@ -6,6 +6,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 from joeBot import JoeSubGraph
+from joeBot import JoeBarn
 from joeBot.Utils import TaskManager, Ticker
 
 
@@ -28,7 +29,7 @@ class AvaxTicker(commands.Cog, Ticker):
     async def ticker(self):
         try:
             if self.carousel:
-                avaxPrice = JoeSubGraph.getAvaxPrice()
+                (avaxPrice, _) = JoeBarn.get_avax_price()
                 activity = "AVAX: ${}".format(round(avaxPrice, 2))
                 self.carousel = False
             else:
